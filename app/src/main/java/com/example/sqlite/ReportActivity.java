@@ -11,7 +11,6 @@ import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -20,7 +19,6 @@ import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
-import com.github.mikephil.charting.utils.ColorTemplate;
 import com.google.android.material.tabs.TabLayout;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -30,14 +28,16 @@ import java.util.Map;
 
 public class ReportActivity extends AppCompatActivity {
 
-    private RecyclerView rvReportMain;
     private Toolbar toolbar;
     private Spinner spinnerFilter;
+    private TabLayout tabLayout;
+    private PieChart pieChart;
+    private RecyclerView rvCategoryStats;
+    private TextView tvTotalIncome, tvTotalExpense, tvDailyAverage, tvComparePrevious;
     private DatabaseHelper dbHelper;
     
     private long startDate = 0, endDate = Long.MAX_VALUE;
     private boolean isExpenseTab = true;
-    private ReportAdapter mainAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,18 +48,21 @@ public class ReportActivity extends AppCompatActivity {
         initViews();
         setupToolbar();
         setupSpinner();
-        
-        mainAdapter = new ReportAdapter();
-        rvReportMain.setLayoutManager(new LinearLayoutManager(this));
-        rvReportMain.setAdapter(mainAdapter);
+        setupTabLayout();
         
         refreshData();
     }
 
     private void initViews() {
         toolbar = findViewById(R.id.toolbar_report);
-        rvReportMain = findViewById(R.id.rv_report_main);
         spinnerFilter = findViewById(R.id.spinner_report_filter);
+        tabLayout = findViewById(R.id.tab_layout_report);
+        pieChart = findViewById(R.id.pie_chart_report);
+        rvCategoryStats = findViewById(R.id.rv_category_stats);
+        tvTotalIncome = findViewById(R.id.tv_report_total_income);
+        tvTotalExpense = findViewById(R.id.tv_report_total_expense);
+        tvDailyAverage = findViewById(R.id.tv_daily_average);
+        tvComparePrevious = findViewById(R.id.tv_compare_previous);
     }
 
     private void setupToolbar() {
@@ -79,7 +82,7 @@ public class ReportActivity extends AppCompatActivity {
             filters.add("Tháng " + i + " ▾");
         }
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, filters);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, filters);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerFilter.setAdapter(adapter);
 
@@ -110,148 +113,111 @@ public class ReportActivity extends AppCompatActivity {
         }
     }
 
+    private void setupTabLayout() {
+        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                isExpenseTab = (tab.getPosition() == 0);
+                refreshData();
+            }
+            @Override public void onTabUnselected(TabLayout.Tab tab) {}
+            @Override public void onTabReselected(TabLayout.Tab tab) {}
+        });
+    }
+
     private void refreshData() {
         double income = dbHelper.getTotalIncome(startDate, endDate);
         double expense = dbHelper.getTotalExpense(startDate, endDate);
+        tvTotalIncome.setText(String.format(Locale.getDefault(), "%,.0f đ", income));
+        tvTotalExpense.setText(String.format(Locale.getDefault(), "%,.0f đ", expense));
+
+        // Ý tưởng 1: Chi tiêu trung bình ngày
+        long diff = (endDate == Long.MAX_VALUE) ? 30 : Math.max(1, (endDate - startDate) / (1000 * 60 * 60 * 24));
+        tvDailyAverage.setText(String.format(Locale.getDefault(), "%,.0f đ/ngày", expense / diff));
+
+        // Ý tưởng 2: So sánh kỳ trước (Giả lập hạn mức 3tr)
+        double percent = (expense / 3000000) * 100;
+        tvComparePrevious.setText(percent > 100 ? "Vượt mức!" : String.format(Locale.getDefault(), "Dùng %.0f%%", percent));
+        tvComparePrevious.setTextColor(percent > 100 ? Color.RED : Color.parseColor("#4CAF50"));
+
         Map<String, Double> stats = isExpenseTab ? dbHelper.getSpendingStats(startDate, endDate) : dbHelper.getIncomeStats(startDate, endDate);
-        
-        mainAdapter.updateData(income, expense, stats, isExpenseTab);
+        updateChart(stats, isExpenseTab ? expense : income);
+        updateList(stats, isExpenseTab ? expense : income);
     }
 
-    // ADAPTER ĐA NĂNG ĐỂ GIẢI QUYẾT LỖI CUỘN
-    class ReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
-        private static final int TYPE_SUMMARY = 0;
-        private static final int TYPE_CHART = 1;
-        private static final int TYPE_HEADER = 2;
-        private static final int TYPE_ITEM = 3;
+    private void updateChart(Map<String, Double> stats, double total) {
+        if (stats == null || stats.isEmpty()) {
+            pieChart.clear();
+            pieChart.setNoDataText("Chưa có dữ liệu");
+            return;
+        }
 
-        private double totalIncome, totalExpense;
-        private Map<String, Double> stats;
-        private List<String> categories = new ArrayList<>();
-        private List<Double> amounts = new ArrayList<>();
-        private boolean isExpense;
+        List<PieEntry> entries = new ArrayList<>();
+        for (Map.Entry<String, Double> entry : stats.entrySet()) {
+            entries.add(new PieEntry(entry.getValue().floatValue(), entry.getKey()));
+        }
 
-        public void updateData(double income, double expense, Map<String, Double> stats, boolean isExpense) {
-            this.totalIncome = income;
-            this.totalExpense = expense;
-            this.stats = stats;
+        PieDataSet dataSet = new PieDataSet(entries, "");
+        int[] colors = {Color.parseColor("#FF7043"), Color.parseColor("#42A5F5"), Color.parseColor("#AB47BC"), 
+                        Color.parseColor("#26A69A"), Color.parseColor("#FFCA28"), Color.parseColor("#EC407A")};
+        dataSet.setColors(colors);
+        dataSet.setSliceSpace(2f);
+        dataSet.setDrawValues(false);
+
+        pieChart.setData(new PieData(dataSet));
+        pieChart.getDescription().setEnabled(false);
+        pieChart.getLegend().setEnabled(false);
+        pieChart.setDrawHoleEnabled(true);
+        pieChart.setHoleRadius(75f);
+        pieChart.setCenterText(String.format(Locale.getDefault(), "Tổng %s\n%,.0f đ", isExpenseTab ? "chi" : "thu", total));
+        pieChart.setCenterTextSize(14f);
+        pieChart.animateY(800);
+        pieChart.invalidate();
+    }
+
+    private void updateList(Map<String, Double> stats, double total) {
+        StatsAdapter adapter = new StatsAdapter(stats, total, isExpenseTab);
+        rvCategoryStats.setLayoutManager(new LinearLayoutManager(this));
+        rvCategoryStats.setAdapter(adapter);
+    }
+
+    private static class StatsAdapter extends RecyclerView.Adapter<StatsAdapter.ViewHolder> {
+        private final List<String> categories;
+        private final List<Double> amounts;
+        private final double total;
+        private final boolean isExpense;
+
+        public StatsAdapter(Map<String, Double> stats, double total, boolean isExpense) {
+            this.categories = stats != null ? new ArrayList<>(stats.keySet()) : new ArrayList<>();
+            this.amounts = stats != null ? new ArrayList<>(stats.values()) : new ArrayList<>();
+            this.total = total;
             this.isExpense = isExpense;
-            this.categories.clear();
-            this.amounts.clear();
-            if (stats != null) {
-                this.categories.addAll(stats.keySet());
-                this.amounts.addAll(stats.values());
-            }
-            notifyDataSetChanged();
+        }
+
+        @NonNull @Override
+        public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_category_stat, parent, false));
         }
 
         @Override
-        public int getItemViewType(int position) {
-            if (position == 0) return TYPE_SUMMARY;
-            if (position == 1) return TYPE_CHART;
-            if (position == 2) return TYPE_HEADER;
-            return TYPE_ITEM;
+        public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+            String name = categories.get(position);
+            double amt = amounts.get(position);
+            int percent = (total == 0) ? 0 : (int) Math.round((amt / total) * 100);
+            holder.tvName.setText(name);
+            holder.tvPercent.setText(percent + "%");
+            holder.tvAmount.setText(String.format(Locale.getDefault(), "%,.0f đ", amt));
+            holder.tvAmount.setTextColor(isExpense ? Color.parseColor("#FF5252") : Color.parseColor("#4CAF50"));
         }
 
-        @NonNull
-        @Override
-        public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            LayoutInflater inflater = LayoutInflater.from(parent.getContext());
-            if (viewType == TYPE_SUMMARY) return new SummaryVH(inflater.inflate(R.layout.item_report_summary, parent, false));
-            if (viewType == TYPE_CHART) return new ChartVH(inflater.inflate(R.layout.item_report_chart, parent, false));
-            if (viewType == TYPE_HEADER) return new HeaderVH(inflater.inflate(R.layout.item_report_section_header, parent, false));
-            return new ItemVH(inflater.inflate(R.layout.item_category_stat, parent, false));
-        }
+        @Override public int getItemCount() { return categories.size(); }
 
-        @Override
-        public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-            if (holder instanceof SummaryVH) {
-                SummaryVH h = (SummaryVH) holder;
-                h.tvInc.setText(String.format(Locale.getDefault(), "%,.0f đ", totalIncome));
-                h.tvExp.setText(String.format(Locale.getDefault(), "%,.0f đ", totalExpense));
-            } else if (holder instanceof ChartVH) {
-                setupChart(((ChartVH) holder));
-            } else if (holder instanceof ItemVH) {
-                int dataPos = position - 3;
-                ItemVH h = (ItemVH) holder;
-                String name = categories.get(dataPos);
-                double amt = amounts.get(dataPos);
-                double total = isExpense ? totalExpense : totalIncome;
-                int percent = (total == 0) ? 0 : (int) Math.round((amt / total) * 100);
-
-                h.tvName.setText(name);
-                h.tvPercent.setText(percent + "%");
-                h.tvAmount.setText(String.format(Locale.getDefault(), "%,.0f đ", amt));
-                h.tvAmount.setTextColor(isExpense ? Color.parseColor("#FF5252") : Color.parseColor("#4CAF50"));
-                
-                if (name.contains("Ăn")) h.ivIcon.setImageResource(android.R.drawable.ic_menu_today);
-                else if (name.contains("nhà")) h.ivIcon.setImageResource(android.R.drawable.ic_menu_myplaces);
-                else h.ivIcon.setImageResource(android.R.drawable.ic_menu_help);
-            }
-        }
-
-        private void setupChart(ChartVH holder) {
-            holder.tabLayout.removeAllTabs();
-            holder.tabLayout.addTab(holder.tabLayout.newTab().setText("CHI TIÊU"), isExpense);
-            holder.tabLayout.addTab(holder.tabLayout.newTab().setText("THU NHẬP"), !isExpense);
-            
-            holder.tabLayout.clearOnTabSelectedListeners();
-            holder.tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
-                @Override
-                public void onTabSelected(TabLayout.Tab tab) {
-                    isExpenseTab = (tab.getPosition() == 0);
-                    refreshData();
-                }
-                @Override public void onTabUnselected(TabLayout.Tab tab) {}
-                @Override public void onTabReselected(TabLayout.Tab tab) {}
-            });
-
-            if (stats == null || stats.isEmpty()) {
-                holder.chart.clear();
-                holder.chart.setNoDataText("Chưa có dữ liệu");
-                return;
-            }
-
-            List<PieEntry> entries = new ArrayList<>();
-            for (Map.Entry<String, Double> entry : stats.entrySet()) {
-                entries.add(new PieEntry(entry.getValue().floatValue(), entry.getKey()));
-            }
-
-            PieDataSet dataSet = new PieDataSet(entries, "");
-            int[] colors = {Color.parseColor("#FF7043"), Color.parseColor("#42A5F5"), Color.parseColor("#AB47BC"), 
-                            Color.parseColor("#26A69A"), Color.parseColor("#FFCA28"), Color.parseColor("#EC407A")};
-            dataSet.setColors(colors);
-            dataSet.setSliceSpace(2f);
-            dataSet.setDrawValues(false);
-
-            holder.chart.setData(new PieData(dataSet));
-            holder.chart.getDescription().setEnabled(false);
-            holder.chart.getLegend().setEnabled(false);
-            holder.chart.setDrawHoleEnabled(true);
-            holder.chart.setHoleRadius(75f);
-            holder.chart.setCenterText(String.format(Locale.getDefault(), "Tổng %s\n%,.0f đ", isExpense ? "chi" : "thu", isExpense ? totalExpense : totalIncome));
-            holder.chart.setCenterTextSize(14f);
-            holder.chart.invalidate();
-        }
-
-        @Override
-        public int getItemCount() {
-            return 3 + categories.size();
-        }
-
-        class SummaryVH extends RecyclerView.ViewHolder {
-            TextView tvInc, tvExp;
-            SummaryVH(View v) { super(v); tvInc = v.findViewById(R.id.tv_report_total_income); tvExp = v.findViewById(R.id.tv_report_total_expense); }
-        }
-        class ChartVH extends RecyclerView.ViewHolder {
-            PieChart chart; TabLayout tabLayout;
-            ChartVH(View v) { super(v); chart = v.findViewById(R.id.pie_chart_report); tabLayout = v.findViewById(R.id.tab_layout_report); }
-        }
-        class HeaderVH extends RecyclerView.ViewHolder { HeaderVH(View v) { super(v); } }
-        class ItemVH extends RecyclerView.ViewHolder {
+        static class ViewHolder extends RecyclerView.ViewHolder {
             TextView tvName, tvAmount, tvPercent; ImageView ivIcon;
-            ItemVH(View v) { super(v); tvName = v.findViewById(R.id.tv_stat_category_name); tvAmount = v.findViewById(R.id.tv_stat_category_amount);
-                tvPercent = v.findViewById(R.id.tv_stat_percent); ivIcon = v.findViewById(R.id.iv_stat_icon); }
+            public ViewHolder(View v) { super(v);
+                tvName = v.findViewById(R.id.tv_stat_category_name); tvAmount = v.findViewById(R.id.tv_stat_category_amount);
+                tvPercent = v.findViewById(R.id.tv_stat_percent); ivIcon = v.findViewById(R.id.iv_stat_icon);
+            }
         }
     }
 }
