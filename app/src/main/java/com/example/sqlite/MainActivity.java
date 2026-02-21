@@ -23,7 +23,7 @@ import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
-    private TextView tvSummaryIncome, tvSummaryExpense, tvSummaryBalance, tvUsername;
+    private TextView tvSummaryIncome, tvSummaryExpense, tvSummaryBalance;
     private TextView tvStudentTip, tvBudgetPercent, tvBudgetDesc;
     private ProgressBar pbBudget;
     private View cardTip;
@@ -37,7 +37,6 @@ public class MainActivity extends AppCompatActivity {
     private double currentIncome = 0, currentExpense = 0, currentBalance = 0;
     
     private long filterStartDate = 0, filterEndDate = Long.MAX_VALUE;
-    private String filterLabel = "Tháng 2/2026";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,7 +46,7 @@ public class MainActivity extends AppCompatActivity {
         dbHelper = new DatabaseHelper(this);
         
         initViews();
-        setupToolbar(); // Kích hoạt nút quay lại
+        setupToolbar(); 
         handleEvents();
     }
 
@@ -62,7 +61,6 @@ public class MainActivity extends AppCompatActivity {
         tvSummaryIncome = findViewById(R.id.tv_summary_income);
         tvSummaryExpense = findViewById(R.id.tv_summary_expense);
         tvSummaryBalance = findViewById(R.id.tv_summary_balance);
-        tvUsername = findViewById(R.id.tv_username);
         
         tvStudentTip = findViewById(R.id.tv_student_tip);
         tvBudgetPercent = findViewById(R.id.tv_budget_percent);
@@ -82,7 +80,6 @@ public class MainActivity extends AppCompatActivity {
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayShowTitleEnabled(false);
         }
-        // Khi nhấn nút mũi tên quay lại trên trang chủ, nó sẽ thoát app
         toolbar.setNavigationOnClickListener(v -> finish());
     }
 
@@ -94,7 +91,6 @@ public class MainActivity extends AppCompatActivity {
         currentBalance = currentIncome - currentExpense;
 
         updateAmountDisplay();
-        tvUsername.setText(filterLabel + " ▾");
         updateGenZTips();
 
         TransactionAdapter adapter = new TransactionAdapter(transactions);
@@ -104,13 +100,28 @@ public class MainActivity extends AppCompatActivity {
             new AlertDialog.Builder(this)
                     .setTitle("Tùy chọn")
                     .setItems(options, (dialog, which) -> {
-                        if (which == 1) confirmDelete(transaction.id);
+                        if (which == 0) {
+                            editTransaction(transaction);
+                        } else if (which == 1) {
+                            confirmDelete(transaction.id);
+                        }
                     })
                     .show();
         });
 
         rvMainList.setLayoutManager(new LinearLayoutManager(this));
         rvMainList.setAdapter(adapter);
+    }
+
+    private void editTransaction(TransactionAdapter.Transaction transaction) {
+        Intent intent = new Intent(this, AddTransactionActivity.class);
+        intent.putExtra("isEdit", true);
+        intent.putExtra("id", transaction.id);
+        intent.putExtra("title", transaction.title);
+        intent.putExtra("amount", transaction.amount);
+        intent.putExtra("isExpense", transaction.isExpense);
+        intent.putExtra("timestamp", transaction.timestamp);
+        startActivity(intent);
     }
 
     private void updateGenZTips() {
@@ -120,9 +131,9 @@ public class MainActivity extends AppCompatActivity {
         int usagePercent = (int) ((currentExpense / monthlyLimit) * 100);
         if (usagePercent > 100) usagePercent = 100;
 
-        pbBudget.setProgress(usagePercent);
-        tvBudgetPercent.setText(usagePercent + "%");
-        tvBudgetDesc.setText(String.format(Locale.getDefault(), "Đã tiêu: %,.0f / %,.0f đ", currentExpense, monthlyLimit));
+        if (pbBudget != null) pbBudget.setProgress(usagePercent);
+        if (tvBudgetPercent != null) tvBudgetPercent.setText(usagePercent + "%");
+        if (tvBudgetDesc != null) tvBudgetDesc.setText(String.format(Locale.getDefault(), "Đã tiêu: %,.0f / %,.0f đ", currentExpense, monthlyLimit));
 
         String tip;
         int color;
@@ -147,7 +158,7 @@ public class MainActivity extends AppCompatActivity {
         tvStudentTip.setText(tip);
         tvStudentTip.setTextColor(color);
         if (cardTip != null) {
-            cardTip.setBackgroundColor(isAmountVisible ? lightenColor(color) : Color.parseColor("#F5F5F5"));
+            cardTip.setBackgroundColor(lightenColor(color));
         }
         if (ivTipIcon != null) ivTipIcon.setColorFilter(color);
     }
@@ -195,11 +206,6 @@ public class MainActivity extends AppCompatActivity {
 
         btnMailbox.setOnClickListener(v -> startActivity(new Intent(this, MessageBoxActivity.class)));
 
-        findViewById(R.id.layout_header).setOnClickListener(v -> {
-            Intent intent = new Intent(this, DateRangeActivity.class);
-            startActivityForResult(intent, 100);
-        });
-
         findViewById(R.id.btn_account_book).setOnClickListener(v -> startActivity(new Intent(MainActivity.this, HistoryActivity.class)));
         findViewById(R.id.btn_add_top).setOnClickListener(v -> startActivity(new Intent(MainActivity.this, AddTransactionActivity.class)));
         findViewById(R.id.btn_bill).setOnClickListener(v -> startActivity(new Intent(this, ReportActivity.class)));
@@ -221,7 +227,6 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == 100 && resultCode == RESULT_OK && data != null) {
             filterStartDate = data.getLongExtra("startDate", 0);
             filterEndDate = data.getLongExtra("endDate", Long.MAX_VALUE);
-            filterLabel = data.getStringExtra("label");
             loadData(); 
         }
     }

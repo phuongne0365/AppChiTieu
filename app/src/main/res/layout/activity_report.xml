@@ -49,9 +49,11 @@
         <com.google.android.material.tabs.TabItem android:text="THU NHẬP" />
     </com.google.android.material.tabs.TabLayout>
 
+    <!-- SỬA LỖI CUỘN: layout_height="0dp" và layout_weight="1" để nó không bị đẩy ra khỏi màn hình -->
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:fillViewport="true">
 
         <LinearLayout
@@ -60,7 +62,7 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- Card Tổng quan với các thông số bổ sung -->
+            <!-- Card Tổng quan -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -136,7 +138,8 @@
                 android:layout_height="wrap_content"
                 android:nestedScrollingEnabled="false" />
 
-            <View android:layout_width="match_parent" android:layout_height="80dp" />
+            <!-- Spacer đáy rộng hơn để đảm bảo cuộn hết -->
+            <View android:layout_width="match_parent" android:layout_height="120dp" />
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 </LinearLayout>

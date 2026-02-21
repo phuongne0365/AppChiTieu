@@ -43,12 +43,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 COLUMN_TIMESTAMP + " INTEGER, " +
                 COLUMN_CATEGORY + " TEXT, " +
                 COLUMN_IS_EXPENSE + " INTEGER);");
-        
-        db.execSQL("CREATE TABLE IF NOT EXISTS users (" +
-                "user_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                "username TEXT UNIQUE, " +
-                "password TEXT, " +
-                "fullname TEXT);");
     }
 
     @Override
@@ -86,36 +80,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
     }
 
-    // --- User Methods ---
-    public boolean registerUser(String username, String password, String fullname) {
-        SQLiteDatabase db = this.getWritableDatabase();
-        ContentValues values = new ContentValues();
-        values.put("username", username);
-        values.put("password", password);
-        values.put("fullname", fullname);
-        long result = db.insert("users", null, values);
-        db.close();
-        return result != -1;
-    }
-
-    public String checkUser(String username, String password) {
-        SQLiteDatabase db = this.getReadableDatabase();
-        Cursor cursor = db.rawQuery("SELECT fullname FROM users WHERE username = ? AND password = ?", new String[]{username, password});
-        String fullname = null;
-        if (cursor.moveToFirst()) {
-            fullname = cursor.getString(0);
-        }
-        cursor.close();
-        db.close();
-        return fullname;
-    }
-
     // --- Transaction Methods ---
-    public long addTransaction(String title, double amount, String time, String category, boolean isExpense) {
-        return addTransaction(title, amount, time, category, isExpense, System.currentTimeMillis());
-    }
-
-    // Mới: Hỗ trợ truyền timestamp chính xác (có cả năm)
     public long addTransaction(String title, double amount, String time, String category, boolean isExpense, long timestamp) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -128,6 +93,19 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         long id = db.insert(TABLE_TRANSACTIONS, null, values);
         db.close();
         return id;
+    }
+
+    public void updateTransaction(int id, String title, double amount, String time, String category, boolean isExpense, long timestamp) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_TITLE, title);
+        values.put(COLUMN_AMOUNT, amount);
+        values.put(COLUMN_TIME, time);
+        values.put(COLUMN_TIMESTAMP, timestamp);
+        values.put(COLUMN_CATEGORY, category);
+        values.put(COLUMN_IS_EXPENSE, isExpense ? 1 : 0);
+        db.update(TABLE_TRANSACTIONS, values, COLUMN_ID + " = ?", new String[]{String.valueOf(id)});
+        db.close();
     }
 
     public void deleteTransaction(int id) {
@@ -158,10 +136,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         cursor.close();
         db.close();
         return transactions;
-    }
-
-    public List<TransactionAdapter.Transaction> getAllTransactions() {
-        return getFilteredTransactions(0, Long.MAX_VALUE);
     }
 
     public double getTotalIncome(long start, long end) {

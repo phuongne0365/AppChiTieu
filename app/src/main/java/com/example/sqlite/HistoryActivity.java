@@ -42,9 +42,14 @@ public class HistoryActivity extends AppCompatActivity {
         initViews();
         setupToolbar();
         setupFilter();
-        loadData();
         setupSwipeToDelete();
         setupSearch();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadData(); // Tự động làm mới dữ liệu khi quay lại từ màn hình Sửa
     }
 
     private void initViews() {
@@ -118,17 +123,35 @@ public class HistoryActivity extends AppCompatActivity {
         }
         
         adapter = new TransactionAdapter(filteredList);
+        
+        // KÍCH HOẠT NÚT SỬA CHO MÀN HÌNH LỊCH SỬ
         adapter.setOnItemLongClickListener((transaction, position) -> {
             if (transaction.isHeader) return;
-            String[] options = {"Sửa", "Xóa"};
+            String[] options = {"Sửa giao dịch", "Xóa giao dịch"};
             new AlertDialog.Builder(this)
+                    .setTitle("Tùy chọn")
                     .setItems(options, (dialog, which) -> {
-                        if (which == 1) confirmDelete(transaction.id);
+                        if (which == 0) {
+                            editTransaction(transaction);
+                        } else if (which == 1) {
+                            confirmDelete(transaction.id);
+                        }
                     }).show();
         });
 
         rvHistoryList.setLayoutManager(new LinearLayoutManager(this));
         rvHistoryList.setAdapter(adapter);
+    }
+
+    private void editTransaction(TransactionAdapter.Transaction transaction) {
+        Intent intent = new Intent(this, AddTransactionActivity.class);
+        intent.putExtra("isEdit", true);
+        intent.putExtra("id", transaction.id);
+        intent.putExtra("title", transaction.title);
+        intent.putExtra("amount", transaction.amount);
+        intent.putExtra("isExpense", transaction.isExpense);
+        intent.putExtra("timestamp", transaction.timestamp);
+        startActivity(intent);
     }
 
     @Override
@@ -138,7 +161,8 @@ public class HistoryActivity extends AppCompatActivity {
             startDate = data.getLongExtra("startDate", 0);
             endDate = data.getLongExtra("endDate", Long.MAX_VALUE);
             String label = data.getStringExtra("label");
-            tvFilterDateRange.setText(label + " ▾");
+            // Hiển thị nhãn lọc thay vì icon 3 chấm nếu bạn muốn, 
+            // nhưng hiện tại ta giữ nguyên UI là icon 3 chấm theo yêu cầu trước.
             loadData();
         }
     }
@@ -149,6 +173,7 @@ public class HistoryActivity extends AppCompatActivity {
                 .setMessage("Bạn chắc chắn muốn xóa giao dịch này?")
                 .setPositiveButton("Xóa", (dialog, which) -> {
                     dbHelper.deleteTransaction(transactionId);
+                    Toast.makeText(this, "Đã xóa thành công", Toast.LENGTH_SHORT).show();
                     loadData();
                 })
                 .setNegativeButton("Hủy", null)
