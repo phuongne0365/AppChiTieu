@@ -12,7 +12,8 @@
         android:layout_height="?attr/actionBarSize"
         android:background="#FFFFFF"
         android:elevation="4dp"
-        app:navigationIcon="@android:drawable/ic_menu_revert">
+        app:navigationIcon="@drawable/ic_back_arrow"
+        app:navigationIconTint="@color/primary_pink">
 
         <TextView
             android:layout_width="wrap_content"
@@ -32,56 +33,6 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="16dp">
-
-            <!-- Nhóm: Tài khoản -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
-                android:text="TÀI KHOẢN"
-                android:textColor="#757575"
-                android:textSize="12sp"
-                android:textStyle="bold" />
-
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
-
-                    <LinearLayout
-                        android:id="@+id/btn_profile"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:background="?attr/selectableItemBackground"
-                        android:gravity="center_vertical"
-                        android:padding="16dp">
-                        <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:src="@android:drawable/ic_menu_myplaces"
-                            app:tint="#009688" />
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="16dp"
-                            android:layout_weight="1"
-                            android:text="Thông tin cá nhân"
-                            android:textColor="#000000" />
-                        <ImageView
-                            android:layout_width="16dp"
-                            android:layout_height="16dp"
-                            android:src="@android:drawable/ic_media_play"
-                            app:tint="#BDBDBD" />
-                    </LinearLayout>
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
 
             <!-- Nhóm: Ứng dụng -->
             <TextView
@@ -118,8 +69,8 @@
                         <TextView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="16dp"
                             android:layout_weight="1"
+                            android:layout_marginStart="16dp"
                             android:text="Nhắc nhở hàng ngày"
                             android:textColor="#000000" />
                         <androidx.appcompat.widget.SwitchCompat
@@ -144,8 +95,8 @@
                         <TextView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="16dp"
                             android:layout_weight="1"
+                            android:layout_marginStart="16dp"
                             android:text="Chế độ tối (Dark Mode)"
                             android:textColor="#000000" />
                         <androidx.appcompat.widget.SwitchCompat
