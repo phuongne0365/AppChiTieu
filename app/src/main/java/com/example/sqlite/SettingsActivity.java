@@ -26,7 +26,6 @@ public class SettingsActivity extends AppCompatActivity {
     private SwitchCompat switchDarkMode;
     private static final String DB_NAME = "SmartWallet.db";
 
-    // Launcher để lưu file (Sao lưu)
     private final ActivityResultLauncher<Intent> backupLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             result -> {
@@ -36,7 +35,6 @@ public class SettingsActivity extends AppCompatActivity {
             }
     );
 
-    // Launcher để chọn file (Khôi phục)
     private final ActivityResultLauncher<Intent> restoreLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             result -> {
@@ -80,13 +78,9 @@ public class SettingsActivity extends AppCompatActivity {
             }
         });
 
-        findViewById(R.id.btn_profile).setOnClickListener(v -> 
-            Toast.makeText(this, "Thông tin cá nhân", Toast.LENGTH_SHORT).show());
-            
-        // KÍCH HOẠT SAO LƯU
-        findViewById(R.id.btn_backup).setOnClickListener(v -> startBackupProcess());
+        // Đã loại bỏ xử lý btn_profile (Thông tin cá nhân) để đồng bộ với giao diện mới
 
-        // KÍCH HOẠT KHÔI PHỤC
+        findViewById(R.id.btn_backup).setOnClickListener(v -> startBackupProcess());
         findViewById(R.id.btn_restore).setOnClickListener(v -> startRestoreProcess());
             
         findViewById(R.id.btn_about).setOnClickListener(v -> 
@@ -130,15 +124,13 @@ public class SettingsActivity extends AppCompatActivity {
     private void startRestoreProcess() {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("*/*"); // Cho phép chọn mọi file, ta sẽ check đuôi sau
+        intent.setType("*/*");
         restoreLauncher.launch(intent);
     }
 
     private void handleRestore(Uri sourceUri) {
         try {
             File dbFile = getDatabasePath(DB_NAME);
-            
-            // Đảm bảo thư mục databases tồn tại
             if (!dbFile.getParentFile().exists()) {
                 dbFile.getParentFile().mkdirs();
             }
@@ -154,7 +146,6 @@ public class SettingsActivity extends AppCompatActivity {
                 
                 Toast.makeText(this, "Khôi phục thành công! Hãy khởi động lại app.", Toast.LENGTH_LONG).show();
                 
-                // Đóng app để refresh database
                 new android.os.Handler().postDelayed(() -> {
                     Intent intent = new Intent(this, MainActivity.class);
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
