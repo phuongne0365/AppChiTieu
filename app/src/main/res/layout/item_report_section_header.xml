@@ -4,6 +4,6 @@
     android:layout_height="wrap_content"
     android:padding="16dp"
     android:text="Chi tiết theo danh mục"
-    android:textColor="#000000"
+    android:textColor="?android:attr/textColorPrimary"
     android:textSize="16sp"
     android:textStyle="bold" />

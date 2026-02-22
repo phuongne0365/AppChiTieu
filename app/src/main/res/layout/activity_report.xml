@@ -1,19 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F5F5"
+    android:background="?android:attr/windowBackground"
     android:orientation="vertical">
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar_report"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="#FFFFFF"
+        android:background="?attr/colorSurface"
         android:elevation="4dp"
         app:navigationIcon="@drawable/ic_back_arrow"
-        app:navigationIconTint="@color/primary_pink">
+        app:navigationIconTint="?attr/colorPrimary">
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -24,7 +25,7 @@
                 android:layout_alignParentStart="true"
                 android:layout_centerVertical="true"
                 android:text="Phân tích"
-                android:textColor="#000000"
+                android:textColor="?android:attr/textColorPrimary"
                 android:textSize="18sp"
                 android:textStyle="bold" />
             <Spinner
@@ -33,7 +34,8 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
-                android:background="@null" />
+                android:background="@null"
+                android:dropDownSelector="?attr/colorSurface" />
         </RelativeLayout>
     </androidx.appcompat.widget.Toolbar>
 
@@ -41,15 +43,14 @@
         android:id="@+id/tab_layout_report"
         android:layout_width="match_parent"
         android:layout_height="48dp"
-        android:background="#FFFFFF"
-        app:tabIndicatorColor="@color/primary_pink"
-        app:tabSelectedTextColor="@color/primary_pink"
-        app:tabTextColor="#757575">
+        android:background="?attr/colorSurface"
+        app:tabIndicatorColor="?attr/colorPrimary"
+        app:tabSelectedTextColor="?attr/colorPrimary"
+        app:tabTextColor="?android:attr/textColorSecondary">
         <com.google.android.material.tabs.TabItem android:text="CHI TIÊU" />
         <com.google.android.material.tabs.TabItem android:text="THU NHẬP" />
     </com.google.android.material.tabs.TabLayout>
 
-    <!-- SỬA LỖI CUỘN: layout_height="0dp" và layout_weight="1" để nó không bị đẩy ra khỏi màn hình -->
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -62,13 +63,13 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- Card Tổng quan -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
                 app:cardCornerRadius="16dp"
-                app:cardElevation="2dp">
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="?attr/colorSurface">
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -84,38 +85,38 @@
                             android:layout_weight="1"
                             android:gravity="center"
                             android:orientation="vertical">
-                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Tổng Thu" android:textColor="#757575" android:textSize="12sp" />
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Tổng Thu" android:textColor="?android:attr/textColorSecondary" android:textSize="12sp" />
                             <TextView android:id="@+id/tv_report_total_income" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0 đ" android:textColor="#4CAF50" android:textSize="18sp" android:textStyle="bold" />
                         </LinearLayout>
-                        <View android:layout_width="1dp" android:layout_height="40dp" android:background="#EEEEEE" />
+                        <View android:layout_width="1dp" android:layout_height="40dp" android:background="?android:attr/listDivider" />
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:gravity="center"
                             android:orientation="vertical">
-                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Tổng Chi" android:textColor="#757575" android:textSize="12sp" />
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Tổng Chi" android:textColor="?android:attr/textColorSecondary" android:textSize="12sp" />
                             <TextView android:id="@+id/tv_report_total_expense" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0 đ" android:textColor="#E53935" android:textSize="18sp" android:textStyle="bold" />
                         </LinearLayout>
                     </LinearLayout>
-                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F0F0F0" android:layout_marginVertical="12dp"/>
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?android:attr/listDivider" android:layout_marginVertical="12dp"/>
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal">
-                        <TextView android:id="@+id/tv_daily_average" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="0 đ/ngày" android:textColor="#2D3436" android:textSize="12sp" />
-                        <TextView android:id="@+id/tv_compare_previous" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="-- %" android:textColor="#757575" android:textSize="12sp" android:textStyle="bold" />
+                        <TextView android:id="@+id/tv_daily_average" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="0 đ/ngày" android:textColor="?android:attr/textColorPrimary" android:textSize="12sp" />
+                        <TextView android:id="@+id/tv_compare_previous" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="-- %" android:textColor="?android:attr/textColorSecondary" android:textSize="12sp" android:textStyle="bold" />
                     </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- Card Biểu đồ Donut -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
                 app:cardCornerRadius="16dp"
-                app:cardElevation="2dp">
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="?attr/colorSurface">
                 <com.github.mikephil.charting.charts.PieChart
                     android:id="@+id/pie_chart_report"
                     android:layout_width="match_parent"
@@ -128,17 +129,15 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
                 android:text="Chi tiết theo danh mục"
-                android:textColor="#000000"
+                android:textColor="?android:attr/textColorPrimary"
                 android:textStyle="bold" />
 
-            <!-- Danh sách danh mục -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rv_category_stats"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:nestedScrollingEnabled="false" />
 
-            <!-- Spacer đáy rộng hơn để đảm bảo cuộn hết -->
             <View android:layout_width="match_parent" android:layout_height="120dp" />
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

@@ -2,7 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/bg_light"
+    android:background="?attr/colorSurfaceVariant"
     android:orientation="horizontal"
     android:paddingHorizontal="16dp"
     android:paddingVertical="8dp">
@@ -13,7 +13,7 @@
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:text="23 thg 12 Thứ ba"
-        android:textColor="@color/text_sub"
+        android:textColor="?android:attr/textColorSecondary"
         android:textSize="12sp"
         android:textStyle="bold" />
 
@@ -22,6 +22,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Chi tiêu: 223.000 Thu nhập: 60.000"
-        android:textColor="@color/text_sub"
+        android:textColor="?android:attr/textColorSecondary"
         android:textSize="11sp" />
 </LinearLayout>

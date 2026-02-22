@@ -4,22 +4,22 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white"
+    android:background="?android:attr/windowBackground"
     android:orientation="vertical">
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar_add"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="@color/primary_pink"
+        android:background="?attr/colorPrimary"
         app:navigationIcon="@android:drawable/ic_menu_close_clear_cancel"
-        app:navigationIconTint="@color/primary_dark_pink">
+        app:navigationIconTint="?attr/colorOnPrimary">
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:text="Thêm giao dịch"
-            android:textColor="@color/white"
+            android:textColor="?attr/colorOnPrimary"
             android:textSize="18sp"
             android:textStyle="bold" />
     </androidx.appcompat.widget.Toolbar>
@@ -28,9 +28,10 @@
         android:id="@+id/tabLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:tabIndicatorColor="@color/primary_pink"
-        app:tabSelectedTextColor="@color/primary_pink"
-        app:tabTextColor="#757575">
+        android:background="?attr/colorSurface"
+        app:tabIndicatorColor="?attr/colorPrimary"
+        app:tabSelectedTextColor="?attr/colorPrimary"
+        app:tabTextColor="?android:attr/textColorSecondary">
         <com.google.android.material.tabs.TabItem android:text="CHI TIỀN" />
         <com.google.android.material.tabs.TabItem android:text="THU TIỀN" />
     </com.google.android.material.tabs.TabLayout>
@@ -42,14 +43,13 @@
         android:orientation="vertical"
         android:padding="20dp">
 
-        <!-- Chọn ngày giao dịch -->
         <LinearLayout
             android:id="@+id/layout_select_date"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:padding="8dp"
-            android:background="@drawable/bg_white_rounded_small"
+            android:background="?attr/colorSurfaceVariant"
             android:elevation="1dp"
             android:layout_marginBottom="16dp"
             android:clickable="true"
@@ -58,14 +58,14 @@
                 android:layout_width="18dp"
                 android:layout_height="18dp"
                 android:src="@android:drawable/ic_menu_my_calendar"
-                app:tint="@color/primary_pink" />
+                app:tint="?attr/colorPrimary" />
             <TextView
                 android:id="@+id/tv_transaction_date"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
                 android:text="Hôm nay"
-                android:textColor="@color/text_main"
+                android:textColor="?android:attr/textColorPrimary"
                 android:textSize="14sp" />
         </LinearLayout>
 
@@ -73,7 +73,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Số tiền"
-            android:textColor="#757575" />
+            android:textColor="?android:attr/textColorSecondary" />
 
         <EditText
             android:id="@+id/edtAmount"
@@ -82,6 +82,8 @@
             android:background="@android:color/transparent"
             android:gravity="center"
             android:hint="0"
+            android:textColorHint="?android:attr/textColorSecondary"
+            android:textColor="?android:attr/textColorPrimary"
             android:inputType="number"
             android:textSize="40sp"
             android:textStyle="bold" />
@@ -96,18 +98,18 @@
                 style="@style/Widget.MaterialComponents.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:backgroundTint="#EEEEEE"
+                android:backgroundTint="?attr/colorSurfaceVariant"
                 android:text="+000"
-                android:textColor="@android:color/black" />
+                android:textColor="?android:attr/textColorPrimary" />
             <Button
                 android:id="@+id/btnAddMillion"
                 style="@style/Widget.MaterialComponents.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
-                android:backgroundTint="#EEEEEE"
+                android:backgroundTint="?attr/colorSurfaceVariant"
                 android:text="+000.000"
-                android:textColor="@android:color/black" />
+                android:textColor="?android:attr/textColorPrimary" />
         </LinearLayout>
     </LinearLayout>
 
@@ -117,6 +119,7 @@
         android:paddingHorizontal="16dp"
         android:paddingVertical="8dp"
         android:text="Chọn danh mục"
+        android:textColor="?android:attr/textColorPrimary"
         android:textStyle="bold" />
 
     <androidx.recyclerview.widget.RecyclerView
@@ -132,8 +135,8 @@
         android:layout_height="56dp"
         android:layout_margin="16dp"
         android:text="LƯU NGAY"
-        android:backgroundTint="@color/primary_pink"
-        android:textColor="@color/white"
+        android:backgroundTint="?attr/colorPrimary"
+        android:textColor="?attr/colorOnPrimary"
         android:textSize="16sp"
         android:textStyle="bold"
         app:cornerRadius="12dp" />
