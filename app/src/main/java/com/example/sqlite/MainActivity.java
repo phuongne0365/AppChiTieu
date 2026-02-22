@@ -1,8 +1,11 @@
 package com.example.sqlite;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
@@ -35,18 +38,21 @@ public class MainActivity extends AppCompatActivity {
     private DatabaseHelper dbHelper;
     private boolean isAmountVisible = true;
     private double currentIncome = 0, currentExpense = 0, currentBalance = 0;
-    
+
     private long filterStartDate = 0, filterEndDate = Long.MAX_VALUE;
+    private String lastAlertType = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 1);
+        }
         dbHelper = new DatabaseHelper(this);
-        
+
         initViews();
-        setupToolbar(); 
+        setupToolbar();
         handleEvents();
     }
 
@@ -61,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
         tvSummaryIncome = findViewById(R.id.tv_summary_income);
         tvSummaryExpense = findViewById(R.id.tv_summary_expense);
         tvSummaryBalance = findViewById(R.id.tv_summary_balance);
-        
+
         tvStudentTip = findViewById(R.id.tv_student_tip);
         tvBudgetPercent = findViewById(R.id.tv_budget_percent);
         tvBudgetDesc = findViewById(R.id.tv_budget_desc);
@@ -85,7 +91,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void loadData() {
         List<TransactionAdapter.Transaction> transactions = dbHelper.getFilteredTransactions(filterStartDate, filterEndDate);
-        
+
         currentIncome = dbHelper.getTotalIncome(filterStartDate, filterEndDate);
         currentExpense = dbHelper.getTotalExpense(filterStartDate, filterEndDate);
         currentBalance = currentIncome - currentExpense;
@@ -125,6 +131,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateGenZTips() {
+
         if (tvStudentTip == null) return;
 
         double monthlyLimit = 3000000;
@@ -133,34 +140,66 @@ public class MainActivity extends AppCompatActivity {
 
         if (pbBudget != null) pbBudget.setProgress(usagePercent);
         if (tvBudgetPercent != null) tvBudgetPercent.setText(usagePercent + "%");
-        if (tvBudgetDesc != null) tvBudgetDesc.setText(String.format(Locale.getDefault(), "Đã tiêu: %,.0f / %,.0f đ", currentExpense, monthlyLimit));
+        if (tvBudgetDesc != null) {
+            tvBudgetDesc.setText(String.format(
+                    Locale.getDefault(),
+                    "Đã tiêu: %,.0f / %,.0f đ",
+                    currentExpense,
+                    monthlyLimit
+            ));
+        }
 
         String tip;
         int color;
+        String newAlertType = "NORMAL";
 
         if (currentBalance < 0) {
             tip = "Báo động đỏ! Ví đang 'thở oxy' rồi, ngừng chốt đơn ngay!!! 💀";
             color = Color.parseColor("#D32F2F");
+            newAlertType = "NEGATIVE";
+
         } else if (usagePercent > 80) {
             tip = "Ăn mì tôm thôi chứ đợi gì nữa? Sắp hết tiền rồi bạn ơi! 🍜";
             color = Color.parseColor("#E65100");
+            newAlertType = "OVER_80";
+
         } else if (usagePercent > 50) {
             tip = "Tiền trôi hơi nhanh nha. Tém tém lại kẻo cuối tháng húp không khí! 👀";
             color = Color.parseColor("#0277BD");
+            newAlertType = "OVER_50";
+
         } else if (currentIncome > 0 && currentExpense == 0) {
             tip = "Vừa có lúa về hả? Đừng tiêu hoang đó, tiết kiệm đi nha! 🌿";
             color = Color.parseColor("#388E3C");
+            newAlertType = "INCOME_ONLY";
+
         } else {
             tip = "Ví vẫn ổn, quản lý tiền rất 'chill'. Cứ thế phát huy nha! ✨";
             color = Color.parseColor("#F57F17");
         }
 
+        // ===== So sánh với trạng thái cũ =====
+        SharedPreferences prefs = getSharedPreferences("alert_pref", MODE_PRIVATE);
+        String lastAlert = prefs.getString("last_alert", "NORMAL");
+
+        if (!newAlertType.equals(lastAlert)) {
+
+            if (!newAlertType.equals("NORMAL")) {
+                saveMessage(tip, "Trạng thái tài chính của bạn vừa thay đổi.");
+            }
+
+            prefs.edit().putString("last_alert", newAlertType).apply();
+        }
+
+        // ===== Update UI =====
         tvStudentTip.setText(tip);
         tvStudentTip.setTextColor(color);
-        if (cardTip != null) {
+
+        if (cardTip != null)
             cardTip.setBackgroundColor(lightenColor(color));
-        }
-        if (ivTipIcon != null) ivTipIcon.setColorFilter(color);
+
+        if (ivTipIcon != null)
+            ivTipIcon.setColorFilter(color);
     }
 
     private int lightenColor(int color) {
@@ -181,7 +220,7 @@ public class MainActivity extends AppCompatActivity {
             tvSummaryIncome.setText("****");
             tvSummaryExpense.setText("****");
             tvSummaryBalance.setText("****");
-            btnToggleVisibility.setImageResource(android.R.drawable.button_onoff_indicator_off); 
+            btnToggleVisibility.setImageResource(android.R.drawable.button_onoff_indicator_off);
         }
     }
 
@@ -209,14 +248,14 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.btn_account_book).setOnClickListener(v -> startActivity(new Intent(MainActivity.this, HistoryActivity.class)));
         findViewById(R.id.btn_add_top).setOnClickListener(v -> startActivity(new Intent(MainActivity.this, AddTransactionActivity.class)));
         findViewById(R.id.btn_bill).setOnClickListener(v -> startActivity(new Intent(this, ReportActivity.class)));
-        findViewById(R.id.btn_search_top).setOnClickListener(v -> Toast.makeText(this, "Tìm kiếm", Toast.LENGTH_SHORT).show());
         findViewById(R.id.btn_view_all).setOnClickListener(v -> startActivity(new Intent(this, HistoryActivity.class)));
 
         bottomNavigationView.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
             if (id == R.id.nav_history) startActivity(new Intent(this, HistoryActivity.class));
             else if (id == R.id.nav_report) startActivity(new Intent(this, ReportActivity.class));
-            else if (id == R.id.nav_settings) startActivity(new Intent(this, SettingsActivity.class));
+            else if (id == R.id.nav_settings)
+                startActivity(new Intent(this, SettingsActivity.class));
             return id == R.id.nav_home;
         });
     }
@@ -227,7 +266,19 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == 100 && resultCode == RESULT_OK && data != null) {
             filterStartDate = data.getLongExtra("startDate", 0);
             filterEndDate = data.getLongExtra("endDate", Long.MAX_VALUE);
-            loadData(); 
+            loadData();
         }
+    }
+
+    private void saveMessage(String title, String content) {
+
+        dbHelper.insertMessage(
+                title,
+                content,
+                new java.text.SimpleDateFormat(
+                        "dd/MM/yyyy HH:mm",
+                        java.util.Locale.getDefault()
+                ).format(new java.util.Date())
+        );
     }
 }

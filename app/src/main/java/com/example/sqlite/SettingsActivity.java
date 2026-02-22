@@ -1,7 +1,12 @@
 package com.example.sqlite;
+import android.app.AlarmManager;
 
+import android.app.PendingIntent;
+
+import java.util.Calendar;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.widget.Toast;
@@ -24,6 +29,9 @@ import java.util.Locale;
 public class SettingsActivity extends AppCompatActivity {
 
     private SwitchCompat switchDarkMode;
+    private SwitchCompat switchReminder;
+    private static final String PREF_NAME = "app_settings";
+    private static final String KEY_REMINDER = "reminder_enabled";
     private static final String DB_NAME = "SmartWallet.db";
 
     private final ActivityResultLauncher<Intent> backupLauncher = registerForActivityResult(
@@ -61,7 +69,15 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     private void initViews() {
+
         switchDarkMode = findViewById(R.id.switch_dark_mode);
+        switchReminder = findViewById(R.id.switch_reminder);
+
+        SharedPreferences prefs = getSharedPreferences(PREF_NAME, MODE_PRIVATE);
+        boolean isReminderEnabled = prefs.getBoolean(KEY_REMINDER, false);
+
+        switchReminder.setChecked(isReminderEnabled);
+
         if (AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES) {
             switchDarkMode.setChecked(true);
         } else {
@@ -77,8 +93,38 @@ public class SettingsActivity extends AppCompatActivity {
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
             }
         });
+        switchReminder.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            DatabaseHelper dbHelper = new DatabaseHelper(this);
 
-        // Đã loại bỏ xử lý btn_profile (Thông tin cá nhân) để đồng bộ với giao diện mới
+            String time = new java.text.SimpleDateFormat(
+                    "dd/MM/yyyy HH:mm",
+                    java.util.Locale.getDefault()
+            ).format(new java.util.Date());
+            SharedPreferences prefs = getSharedPreferences(PREF_NAME, MODE_PRIVATE);
+            prefs.edit().putBoolean(KEY_REMINDER, isChecked).apply();
+
+            if (isChecked) {
+                scheduleDailyReminder();
+                Toast.makeText(this,
+                        "Đã bật nhắc nhở 23:30 mỗi ngày",
+                        Toast.LENGTH_SHORT).show();
+                dbHelper.insertMessage(
+                        "Bật nhắc nhở ⏰",
+                        "Bạn đã bật nhắc nhở 23:30 mỗi ngày.",
+                        time
+                );
+            } else {
+                cancelReminder();
+                Toast.makeText(this,
+                        "Đã tắt nhắc nhở",
+                        Toast.LENGTH_SHORT).show();
+                dbHelper.insertMessage(
+                        "Tắt nhắc nhở 🔕",
+                        "Bạn đã tắt nhắc nhở hàng ngày.",
+                        time
+                );
+            }
+        });
 
         findViewById(R.id.btn_backup).setOnClickListener(v -> startBackupProcess());
         findViewById(R.id.btn_restore).setOnClickListener(v -> startRestoreProcess());
@@ -115,6 +161,13 @@ public class SettingsActivity extends AppCompatActivity {
                     out.write(buf, 0, len);
                 }
                 Toast.makeText(this, "Sao lưu thành công!", Toast.LENGTH_LONG).show();
+                DatabaseHelper dbHelper = new DatabaseHelper(this);
+                dbHelper.insertMessage(
+                        "Sao lưu thành công ✅",
+                        "Dữ liệu đã được sao lưu an toàn.",
+                        new SimpleDateFormat("dd/MM/yyyy HH:mm",
+                                Locale.getDefault()).format(new Date())
+                );
             }
         } catch (Exception e) {
             Toast.makeText(this, "Lỗi sao lưu: " + e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -145,6 +198,13 @@ public class SettingsActivity extends AppCompatActivity {
                 }
                 
                 Toast.makeText(this, "Khôi phục thành công! Hãy khởi động lại app.", Toast.LENGTH_LONG).show();
+                DatabaseHelper dbHelper = new DatabaseHelper(this);
+                dbHelper.insertMessage(
+                        "Khôi phục dữ liệu ♻️",
+                        "Dữ liệu đã được khôi phục thành công.",
+                        new SimpleDateFormat("dd/MM/yyyy HH:mm",
+                                Locale.getDefault()).format(new Date())
+                );
                 
                 new android.os.Handler().postDelayed(() -> {
                     Intent intent = new Intent(this, MainActivity.class);
@@ -156,5 +216,45 @@ public class SettingsActivity extends AppCompatActivity {
         } catch (Exception e) {
             Toast.makeText(this, "Lỗi khôi phục: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
+    }
+    private void scheduleDailyReminder() {
+        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+
+        Intent intent = new Intent(this, ReminderReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                this,
+                100,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.HOUR_OF_DAY, 23);
+        calendar.set(Calendar.MINUTE, 30);
+        calendar.set(Calendar.SECOND, 0);
+
+        if (calendar.getTimeInMillis() <= System.currentTimeMillis()) {
+            calendar.add(Calendar.DAY_OF_MONTH, 1);
+        }
+
+        alarmManager.setRepeating(
+                AlarmManager.RTC_WAKEUP,
+                calendar.getTimeInMillis(),
+                AlarmManager.INTERVAL_DAY,
+                pendingIntent
+        );
+    }
+    private void cancelReminder() {
+        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+
+        Intent intent = new Intent(this, ReminderReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                this,
+                100,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
+        alarmManager.cancel(pendingIntent);
     }
 }

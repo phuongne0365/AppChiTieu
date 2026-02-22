@@ -18,8 +18,12 @@ import java.util.Map;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "SmartWallet.db";
-    private static final int DATABASE_VERSION = 5;
-
+    private static final int DATABASE_VERSION = 6;
+    public static final String TABLE_MESSAGES = "messages";
+    public static final String COLUMN_MSG_ID = "id";
+    public static final String COLUMN_MSG_TITLE = "title";
+    public static final String COLUMN_MSG_CONTENT = "content";
+    public static final String COLUMN_MSG_TIME = "time";
     public static final String TABLE_TRANSACTIONS = "transactions";
     public static final String COLUMN_ID = "id";
     public static final String COLUMN_TITLE = "title";
@@ -43,6 +47,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 COLUMN_TIMESTAMP + " INTEGER, " +
                 COLUMN_CATEGORY + " TEXT, " +
                 COLUMN_IS_EXPENSE + " INTEGER);");
+        db.execSQL("CREATE TABLE " + TABLE_MESSAGES + " (" +
+                COLUMN_MSG_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                COLUMN_MSG_TITLE + " TEXT, " +
+                COLUMN_MSG_CONTENT + " TEXT, " +
+                COLUMN_MSG_TIME + " TEXT);");
     }
 
     @Override
@@ -63,6 +72,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 } while (cursor.moveToNext());
             }
             cursor.close();
+        }
+        if (oldVersion < 6) {
+            db.execSQL("CREATE TABLE IF NOT EXISTS " + TABLE_MESSAGES + " (" +
+                    COLUMN_MSG_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                    COLUMN_MSG_TITLE + " TEXT, " +
+                    COLUMN_MSG_CONTENT + " TEXT, " +
+                    COLUMN_MSG_TIME + " TEXT);");
         }
     }
 
@@ -195,4 +211,35 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.close();
         return stats;
     }
+    public void insertMessage(String title, String content, String time) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_MSG_TITLE, title);
+        values.put(COLUMN_MSG_CONTENT, content);
+        values.put(COLUMN_MSG_TIME, time);
+        db.insert(TABLE_MESSAGES, null, values);
+        db.close();
+    }
+    public List<MessageBoxActivity.Message> getAllMessages() {
+        List<MessageBoxActivity.Message> list = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery(
+                "SELECT * FROM " + TABLE_MESSAGES + " ORDER BY id DESC", null);
+
+        if (cursor.moveToFirst()) {
+            do {
+                list.add(new MessageBoxActivity.Message(
+                        cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_MSG_TITLE)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_MSG_CONTENT)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_MSG_TIME))
+                ));
+            } while (cursor.moveToNext());
+        }
+
+        cursor.close();
+        db.close();
+        return list;
+    }
+
 }

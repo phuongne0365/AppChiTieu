@@ -33,16 +33,8 @@ public class MessageBoxActivity extends AppCompatActivity {
         rvMessages = findViewById(R.id.rv_messages);
         rvMessages.setLayoutManager(new LinearLayoutManager(this));
 
-        // Dữ liệu mẫu Gen Z cực chất
-        List<Message> messageList = new ArrayList<>();
-        messageList.add(new Message("Chào mừng Gen Z! 🚀", 
-            "Chào mừng bạn đến với Smart Wallet. Bắt đầu hành trình làm chủ ví tiền ngay thôi nào!", "Vừa xong"));
-        messageList.add(new Message("Bí kíp ăn ngon vẫn dư tiền 🍜", 
-            "Mẹo: Nấu cơm tại nhà giúp bạn tiết kiệm 30% chi phí ăn uống đấy. Thử ngay nhé!", "1 giờ trước"));
-        messageList.add(new Message("Sao lưu thành công! ✅", 
-            "Dữ liệu của bạn đã được đóng gói an toàn. Đừng quên cất file .db cẩn thận nhé!", "Hôm qua"));
-        messageList.add(new Message("Cảnh báo 'bay màu' 💸", 
-            "Ví của bạn đang có dấu hiệu tiêu quá tay. Hãy kiểm tra lại mục Ăn uống ngay!", "2 ngày trước"));
+        DatabaseHelper dbHelper = new DatabaseHelper(this);
+        List<Message> messageList = dbHelper.getAllMessages();
 
         MessageAdapter adapter = new MessageAdapter(messageList);
         rvMessages.setAdapter(adapter);
